@@ -40,7 +40,13 @@ Contextual verdict : OK — all findings are false positives (XML namespaces, sm
 
 ## Installation
 
-Copy `skills/maton/` into your agent's skill directory:
+1. Clone the repository 
+
+```bash
+git clone https://github.com/eRom/claude-skill-maton.git
+```
+
+2. Copy `skills/maton/` into your agent's skill directory:
 
 ```bash
 # Claude Code
