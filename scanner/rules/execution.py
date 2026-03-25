@@ -111,15 +111,19 @@ class PipeToShellRule(Rule):
     ]
 
 
-class BackticksCommandSubstitutionRule(Rule):
-    """Detects shell command substitution via backticks or $(...) syntax."""
+class CommandSubstitutionRule(Rule):
+    """Detects shell command substitution via $(...) syntax.
+
+    Note: backticks are NOT matched here because they produce massive false
+    positives on Markdown inline code (``tool``).  Only the unambiguous $()
+    form is flagged.
+    """
 
     rule_id = "CE-008"
     category = "command_execution"
     severity = Severity.WARNING
-    description = "Shell command substitution detected (backticks or $(...)) — inline command execution"
+    description = "Shell command substitution detected $(...) — inline command execution"
     patterns = [
-        re.compile(r"`[^`]+`"),
         re.compile(r"\$\([^)]+\)"),
     ]
 
