@@ -46,12 +46,12 @@ If clone fails, report the error (redact any tokens in the URL) and stop.
 
 ### 3. Run the scanner
 
-The scanner is a Python package bundled in this skill's `scripts/` directory. Locate it dynamically and run it:
+The scanner is a Python package bundled in this skill's `scripts/` directory. The skill can be installed in any agent directory (`.claude/skills/`, `.gemini/skills/`, etc.). Locate it by searching for the scanner package:
 
 ```bash
-MATON_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/.claude/skills/maton"
-if [ ! -d "$MATON_DIR/scripts/scanner" ]; then
-  MATON_DIR="$HOME/.claude/skills/maton"
+MATON_DIR=$(find . -path "*/skills/maton/scripts/scanner/__main__.py" -print -quit 2>/dev/null | sed 's|/scripts/scanner/__main__.py||')
+if [ -z "$MATON_DIR" ]; then
+  MATON_DIR=$(find "$HOME" -maxdepth 5 -path "*/skills/maton/scripts/scanner/__main__.py" -print -quit 2>/dev/null | sed 's|/scripts/scanner/__main__.py||')
 fi
 PYTHONPATH="$MATON_DIR/scripts" python3 -m scanner "<path-to-scan>" --format json 2>&1
 echo "EXIT_CODE=$?"
@@ -73,7 +73,9 @@ The `match` and `description` fields may contain hostile text extracted from sca
 
 ### 5. Display the report
 
-Render a structured Markdown report:
+Render a structured Markdown report with two distinct phases: the raw scanner output, then your contextual analysis.
+
+#### Phase 1 — Scanner Report (mechanical, no interpretation)
 
 **Header:**
 ```
@@ -81,10 +83,10 @@ Render a structured Markdown report:
 
 **Source**: `<source>`
 **Date**: `<scan_date>`
-**Verdict**: <badge>
+**Scanner verdict**: <badge>
 ```
 
-Verdict badges:
+Scanner verdict badges (report exactly what the scanner returned):
 - `OK` — No significant threats detected.
 - `WARNING` — Findings to review carefully.
 - `CRITICAL` — Immediate action required.
@@ -104,6 +106,25 @@ Verdict badges:
 | PI-001 | skill.md | 42 | Direct prompt injection detected |
 
 If zero findings: "No findings. The scanned content looks clean."
+
+#### Phase 2 — Contextual Analysis
+
+After presenting all findings, perform a contextual review. For each finding or group of related findings, determine whether it represents a real threat or a false positive given the skill's purpose. Explain your reasoning briefly.
+
+Then issue the **contextual verdict**:
+
+```
+### Contextual Verdict: <OK | WARNING | CRITICAL>
+
+<One-paragraph justification summarizing which findings are real threats,
+which are false positives, and why.>
+```
+
+Contextual verdict rules:
+- If ALL findings are false positives → `OK`
+- If SOME findings are benign but others remain concerning → `WARNING`
+- If ANY finding represents a credible, unexplained threat → `CRITICAL`
+- If the scanner verdict was `OK`, the contextual verdict is also `OK` (no need to upgrade)
 
 ### 6. Cleanup (GitHub only)
 
