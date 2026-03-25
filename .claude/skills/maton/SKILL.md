@@ -33,11 +33,17 @@ Si le clone echoue, affiche l'erreur (sans tokens/credentials dans l'URL) et arr
 
 ## Etape 3 — Lancer le scanner
 
-Le scanner Python est dans le projet maton. Lance-le avec le bon PYTHONPATH :
+Le scanner Python est embarque dans le dossier de cette skill. Lance-le avec le bon PYTHONPATH :
 
 ```bash
-PYTHONPATH="/Users/recarnot/dev/claude-skill-maton" python3 -m scanner "<chemin-a-scanner>" --format json 2>&1
+MATON_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/.claude/skills/maton"
+PYTHONPATH="$MATON_DIR" python3 -m scanner "<chemin-a-scanner>" --format json 2>&1
 echo "EXIT_CODE=$?"
+```
+
+Si `git rev-parse` echoue (pas dans un repo git), utilise le chemin absolu connu :
+```bash
+MATON_DIR="$HOME/.claude/skills/maton"
 ```
 
 Ou `<chemin-a-scanner>` est :
